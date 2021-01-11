@@ -106,6 +106,7 @@ for label in $labels; do
 done
 
 add_label "needs_ci"
+add_label "needs_ci:py3"
 
 if [[ ("$needs_hotfix" = true && "$has_hotfix_label" = false && "$hotfix_failed" = false) ]]; then
   echo "Detected HOTFIX pull request that isn't already labeled."
