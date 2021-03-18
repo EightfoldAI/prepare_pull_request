@@ -29,12 +29,18 @@ action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
 pr_body=$(jq --raw-output .pull_request.body "$GITHUB_EVENT_PATH")
 number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
 title=$(jq --raw-output .pull_request.title "$GITHUB_EVENT_PATH")
+draft=$(jq --raw-output .pull_request.draft "$GITHUB_EVENT_PATH")
 
 echo $title
+echo $draft
 
 has_hotfix_label=false
 hotfix_failed=false
 
+if [[ "$draft" == "true" ]]; then
+  echo "Skipping PR since it's still in draft."
+  exit 0
+fi
 if [[ "$title" =~ ^HOTFIX.*$ ]]; then
   needs_hotfix=true
 fi
