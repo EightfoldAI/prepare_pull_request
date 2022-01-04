@@ -81,15 +81,7 @@ IFS=$'\n'
 
 for label in $labels; do
   case $label in
-    needs_revision)
-      echo "Removing label: $label"
-      remove_label "$label"
-      ;;
     ci_verified)
-      echo "Removing label: $label"
-      remove_label "$label"
-      ;;
-    "ci_verified:py3")
       echo "Removing label: $label"
       remove_label "$label"
       ;;
@@ -101,10 +93,6 @@ for label in $labels; do
       echo "Setting hotfix_failed=true"
       hotfix_failed=true
       ;;
-    *:success)
-      echo "Removing label: $label"
-      remove_label "$label"
-      ;;
     *)
       echo "Unknown label $label"
       ;;
@@ -112,7 +100,6 @@ for label in $labels; do
 done
 
 add_label "needs_ci"
-add_label "needs_ci:py3"
 
 if [[ ("$needs_hotfix" = true && "$has_hotfix_label" = false && "$hotfix_failed" = false) ]]; then
   echo "Detected HOTFIX pull request that isn't already labeled."
