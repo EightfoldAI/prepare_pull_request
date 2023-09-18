@@ -85,6 +85,10 @@ for label in $labels; do
       echo "Removing label: $label"
       remove_label "$label"
       ;;
+    "ci_verified:3.11")
+      echo "Removing label: $label"
+      remove_label "$label"
+      ;;
     needs_hotfix)
       echo "Setting has_hotfix_label=true"
       has_hotfix_label=true
@@ -100,6 +104,7 @@ for label in $labels; do
 done
 
 add_label "needs_ci"
+add_label "needs_ci:3.11"
 
 if [[ ("$needs_hotfix" = true && "$has_hotfix_label" = false && "$hotfix_failed" = false) ]]; then
   echo "Detected HOTFIX pull request that isn't already labeled."
