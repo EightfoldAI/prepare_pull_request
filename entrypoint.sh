@@ -85,10 +85,6 @@ for label in $labels; do
       echo "Removing label: $label"
       remove_label "$label"
       ;;
-    "ci_verified:3.11")
-      echo "Removing label: $label"
-      remove_label "$label"
-      ;;
     needs_hotfix)
       echo "Setting has_hotfix_label=true"
       has_hotfix_label=true
