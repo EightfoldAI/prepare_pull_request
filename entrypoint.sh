@@ -85,10 +85,6 @@ for label in $labels; do
       echo "Removing label: $label"
       remove_label "$label"
       ;;
-    ci_verified:lite)
-      echo "Removing label: $label"
-      remove_label "$label"
-      ;;
     needs_hotfix)
       echo "Setting has_hotfix_label=true"
       has_hotfix_label=true
@@ -103,7 +99,7 @@ for label in $labels; do
   esac
 done
 
-add_label "needs_ci:lite"
+add_label "needs_ci"
 
 if [[ ("$needs_hotfix" = true && "$has_hotfix_label" = false && "$hotfix_failed" = false) ]]; then
   echo "Detected HOTFIX pull request that isn't already labeled."
