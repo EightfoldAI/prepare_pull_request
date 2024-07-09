@@ -3,6 +3,11 @@
 #
 # This action runs every time a PR is updated & prepares it for CI.
 # CI checks pull requests that are labeled 'needs_ci' and runs unit tests and lint.
+# - If the 'needs_ci' label is present, no additional labels are added.
+# - If the 'shipit' label is present, it ensures the 'needs_ci' label is added.
+# - If neither 'needs_ci' nor 'shipit' are present, it adds the 'needs_ci:lite' label.
+# - If 'ci_verified' label is present, it removes 'ci_verified' and adds 'needs_ci'.
+# - If 'ci_verified:lite' label is present, it removes 'ci_verified:lite' and adds 'needs_ci:lite'.
 
 set -e
 
@@ -34,15 +39,9 @@ draft=$(jq --raw-output .pull_request.draft "$GITHUB_EVENT_PATH")
 echo $title
 echo $draft
 
-has_hotfix_label=false
-hotfix_failed=false
-
 if [[ "$draft" == "true" ]]; then
   echo "Skipping PR since it's still in draft."
   exit 0
-fi
-if [[ "$title" =~ ^HOTFIX.*$ ]]; then
-  needs_hotfix=true
 fi
 
 add_comment(){
@@ -79,23 +78,35 @@ labels=$(echo "$body" | jq --raw-output '.labels[].name')
 
 IFS=$'\n'
 
+needs_ci_label_present=false
+needs_ci_lite_label_present=false
+shipit_label_present=false
+
 for label in $labels; do
   case $label in
     ci_verified)
-      echo "Removing label: $label"
+      echo "Removing label: $label and adding needs_ci"
       remove_label "$label"
+      add_label "needs_ci"
+      needs_ci_label_present=true
       ;;
     ci_verified:lite)
-      echo "Removing label: $label"
+      echo "Removing label: $label and adding needs_ci:lite"
       remove_label "$label"
+      add_label "needs_ci:lite"
+      needs_ci_lite_label_present=true
       ;;
-    needs_hotfix)
-      echo "Setting has_hotfix_label=true"
-      has_hotfix_label=true
+    needs_ci)
+      echo "needs_ci label is already present"
+      needs_ci_label_present=true
       ;;
-    "hotfix:failed")
-      echo "Setting hotfix_failed=true"
-      hotfix_failed=true
+    needs_ci:lite)
+      echo "needs_ci:lite label is already present"
+      needs_ci_lite_label_present=true
+      ;;
+    shipit)
+      echo "shipit label is present"
+      shipit_label_present=true
       ;;
     *)
       echo "Unknown label $label"
@@ -103,11 +114,13 @@ for label in $labels; do
   esac
 done
 
-add_label "needs_ci:lite"
-
-if [[ ("$needs_hotfix" = true && "$has_hotfix_label" = false && "$hotfix_failed" = false) ]]; then
-  echo "Detected HOTFIX pull request that isn't already labeled."
-  add_label "needs_hotfix"
+if [[ "$shipit_label_present" = true ]]; then
+  if [[ "$needs_ci_label_present" = false ]]; then
+    add_label "needs_ci"
+  fi
+elif [[ "$needs_ci_lite_label_present" = false && "$needs_ci_label_present" = false ]]; then
+  add_label "needs_ci:lite"
 fi
 
 echo "Pull request passed all checkpoints!"
+
