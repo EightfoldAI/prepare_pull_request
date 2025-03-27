@@ -99,13 +99,13 @@ for label in $labels; do
       add_label "needs_ci:lite"
       needs_ci_lite_label_present=true
       ;;
-    ci_verified${alternate_python_version})
+    "ci_verified${alternate_python_version}")
       echo "Removing label: $label and adding needs_ci${alternate_python_version}"
       remove_label "$label"
       add_label "needs_ci${alternate_python_version}"
       alt_needs_ci_label_present=true
       ;;
-    ci_verified${alternate_python_version}:lite)
+    "ci_verified${alternate_python_version}:lite")
       echo "Removing label: $label and adding needs_ci${alternate_python_version}:lite"
       remove_label "$label"
       add_label "needs_ci${alternate_python_version}:lite"
@@ -119,11 +119,11 @@ for label in $labels; do
       echo "needs_ci:lite label is already present"
       needs_ci_lite_label_present=true
       ;;
-    needs_ci${alternate_python_version})
+    "needs_ci${alternate_python_version}")
       echo "needs_ci${alternate_python_version} label is already present"
       alt_needs_ci_label_present=true
       ;;
-    needs_ci${alternate_python_version}:lite)
+    "needs_ci${alternate_python_version}:lite")
       echo "needs_ci${alternate_python_version}:lite label is already present"
       alt_needs_ci_lite_label_present=true
       ;;
