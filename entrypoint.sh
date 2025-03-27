@@ -144,8 +144,10 @@ if [[ "$shipit_label_present" = true ]]; then
   if [[ "$alt_needs_ci_label_present" = false ]]; then
     add_label "needs_ci${alternate_python_version}"
   fi
-elif [[ "$needs_ci_lite_label_present" = false && "$needs_ci_label_present" = false ]]; then
-  add_label "needs_ci:lite"
+else
+  if [[ "$needs_ci_lite_label_present" = false && "$needs_ci_label_present" = false ]]; then
+    add_label "needs_ci:lite"
+  fi
   if [[ "$alt_needs_ci_lite_label_present" = false && "$alt_needs_ci_label_present" = false ]]; then
     add_label "needs_ci${alternate_python_version}:lite"
   fi
