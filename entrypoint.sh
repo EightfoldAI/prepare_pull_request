@@ -146,7 +146,9 @@ if [[ "$shipit_label_present" = true ]]; then
   fi
 elif [[ "$needs_ci_lite_label_present" = false && "$needs_ci_label_present" = false ]]; then
   add_label "needs_ci:lite"
-  add_label "needs_ci${alternate_python_version}:lite"
+  if [[ "$alt_needs_ci_lite_label_present" = false && "$alt_needs_ci_label_present" = false ]]; then
+    add_label "needs_ci${alternate_python_version}:lite"
+  fi
 fi
 
 echo "Pull request passed all checkpoints!"
