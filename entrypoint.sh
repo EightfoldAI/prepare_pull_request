@@ -104,6 +104,10 @@ for label in $labels; do
       add_label "needs_ci${alternate_python_version}"
       alt_needs_ci_label_present=true
       ;;
+    "ci_verified${alternate_python_version}:lite")
+      echo "Removing label: $label"
+      remove_label "$label"
+      ;;
     needs_ci)
       echo "needs_ci label is already present"
       needs_ci_label_present=true
