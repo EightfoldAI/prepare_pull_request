@@ -83,7 +83,6 @@ needs_ci_label_present=false
 needs_ci_lite_label_present=false
 shipit_label_present=false
 alt_needs_ci_label_present=false
-alt_needs_ci_lite_label_present=false
 
 for label in $labels; do
   case $label in
@@ -106,10 +105,8 @@ for label in $labels; do
       alt_needs_ci_label_present=true
       ;;
     "ci_verified${alternate_python_version}:lite")
-      echo "Removing label: $label and adding needs_ci${alternate_python_version}:lite"
+      echo "Removing label: $label"
       remove_label "$label"
-      add_label "needs_ci${alternate_python_version}:lite"
-      alt_needs_ci_lite_label_present=true
       ;;
     needs_ci)
       echo "needs_ci label is already present"
@@ -122,10 +119,6 @@ for label in $labels; do
     "needs_ci${alternate_python_version}")
       echo "needs_ci${alternate_python_version} label is already present"
       alt_needs_ci_label_present=true
-      ;;
-    "needs_ci${alternate_python_version}:lite")
-      echo "needs_ci${alternate_python_version}:lite label is already present"
-      alt_needs_ci_lite_label_present=true
       ;;
     shipit)
       echo "shipit label is present"
@@ -147,9 +140,6 @@ if [[ "$shipit_label_present" = true ]]; then
 else
   if [[ "$needs_ci_lite_label_present" = false && "$needs_ci_label_present" = false ]]; then
     add_label "needs_ci:lite"
-  fi
-  if [[ "$alt_needs_ci_lite_label_present" = false && "$alt_needs_ci_label_present" = false ]]; then
-    add_label "needs_ci${alternate_python_version}:lite"
   fi
 fi
 
