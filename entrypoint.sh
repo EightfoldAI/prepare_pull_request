@@ -34,30 +34,16 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 # When the repository variable CI_K8S_TRIGGER (passed in by the calling workflow) is
 # "true", every needs_ci / needs_ci:lite this action adds also starts the matching CI k8s
 # workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
-# workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Same-repo
-# PRs only: a fork's code must not run on the CI cluster. Never fails the action.
-k8s_on() { [[ "${CI_K8S_TRIGGER:-false}" == "true" ]]; }
-
-same_repo_pr() {
-  local head
-  head=$(curl -sSL -H "${AUTH_HEADER}" -H "${API_HEADER}" \
-    "${URI}/repos/${GITHUB_REPOSITORY}/pulls/${number}" | jq -r '.head.repo.full_name // ""') || return 1
-  [[ "$head" == "$GITHUB_REPOSITORY" ]]
-}
-
-dispatch() {  # dispatch <workflow file> <inputs json>
+# workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Never fails
+# the action.
+k8s_request() {  # k8s_request <workflow file>: start a CI k8s run of this PR
+  [[ "${CI_K8S_TRIGGER:-false}" == "true" ]] || return 0
   local ref
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
   curl -sSL -o /dev/null -w "dispatch $1: HTTP %{http_code}\n" \
     -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
-    -d "{\"ref\":\"${ref}\",\"inputs\":${2}}" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\"}}" \
     "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
-}
-
-k8s_request() {  # k8s_request <workflow file>: start a CI k8s run of this PR
-  k8s_on || return 0
-  same_repo_pr || { echo "CI k8s: not a same-repo PR, skipping $1"; return 0; }
-  dispatch "$1" "{\"pr\":\"${number}\"}"
 }
 # --------------------------------------------------------------------------------------
 
