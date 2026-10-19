@@ -36,7 +36,7 @@ AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 # workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
 # workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Never fails
 # the action.
-k8s_request() {  # k8s_request <workflow file>: start a CI k8s run of this PR
+ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this PR
   [[ "${CI_K8S_TRIGGER:-false}" == "true" ]] || return 0
   local ref
   ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
@@ -108,14 +108,14 @@ for label in $labels; do
       echo "Removing label: $label and adding needs_ci"
       remove_label "$label"
       add_label "needs_ci"
-      k8s_request "ci_k8s_full.yml"
+      ci_k8s_request "ci_k8s_full.yml"
       needs_ci_label_present=true
       ;;
     ci_verified:lite)
       echo "Removing label: $label and adding needs_ci:lite"
       remove_label "$label"
       add_label "needs_ci:lite"
-      k8s_request "ci_k8s_lite.yml"
+      ci_k8s_request "ci_k8s_lite.yml"
       needs_ci_lite_label_present=true
       ;;
     # "ci_verified${alternate_python_version}")
@@ -153,7 +153,7 @@ done
 if [[ "$shipit_label_present" = true ]]; then
   if [[ "$needs_ci_label_present" = false ]]; then
     add_label "needs_ci"
-    k8s_request "ci_k8s_full.yml"
+    ci_k8s_request "ci_k8s_full.yml"
   fi
   if [[ "$alt_needs_ci_label_present" = false && "$current_python_version" != "$alternate_python_version" ]]; then
     add_label "needs_ci${alternate_python_version}"
@@ -161,7 +161,7 @@ if [[ "$shipit_label_present" = true ]]; then
 else
   if [[ "$needs_ci_lite_label_present" = false && "$needs_ci_label_present" = false ]]; then
     add_label "needs_ci:lite"
-    k8s_request "ci_k8s_lite.yml"
+    ci_k8s_request "ci_k8s_lite.yml"
   fi
 fi
 
