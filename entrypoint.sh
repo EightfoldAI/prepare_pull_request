@@ -30,6 +30,23 @@ URI="https://api.github.com"
 API_HEADER="Accept: application/vnd.github.v3+json"
 AUTH_HEADER="Authorization: token ${GITHUB_TOKEN}"
 
+# --- CI k8s --------------------------------------------------------------------------
+# When the repository variable CI_K8S_TRIGGER (passed in by the calling workflow) is
+# "true", every needs_ci / needs_ci:lite this action adds also starts the matching CI k8s
+# workflow. A label added with GITHUB_TOKEN starts no workflow, so it is started with
+# workflow_dispatch, which GITHUB_TOKEN may trigger (needs `actions: write`). Never fails
+# the action.
+ci_k8s_request() {  # ci_k8s_request <workflow file>: start a CI k8s run of this PR
+  [[ "${CI_K8S_TRIGGER:-false}" == "true" ]] || return 0
+  local ref
+  ref=$(jq -r '.repository.default_branch // "master"' "$GITHUB_EVENT_PATH")
+  curl -sSL -o /dev/null -w "dispatch $1: HTTP %{http_code}\n" \
+    -H "${AUTH_HEADER}" -H "${API_HEADER}" -X POST -H "Content-Type: application/json" \
+    -d "{\"ref\":\"${ref}\",\"inputs\":{\"pr\":\"${number}\"}}" \
+    "${URI}/repos/${GITHUB_REPOSITORY}/actions/workflows/${1}/dispatches" || true
+}
+# --------------------------------------------------------------------------------------
+
 action=$(jq --raw-output .action "$GITHUB_EVENT_PATH")
 pr_body=$(jq --raw-output .pull_request.body "$GITHUB_EVENT_PATH")
 number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
@@ -91,12 +108,14 @@ for label in $labels; do
       echo "Removing label: $label and adding needs_ci"
       remove_label "$label"
       add_label "needs_ci"
+      ci_k8s_request "ci_k8s_full.yml"
       needs_ci_label_present=true
       ;;
     ci_verified:lite)
       echo "Removing label: $label and adding needs_ci:lite"
       remove_label "$label"
       add_label "needs_ci:lite"
+      ci_k8s_request "ci_k8s_lite.yml"
       needs_ci_lite_label_present=true
       ;;
     # "ci_verified${alternate_python_version}")
@@ -134,6 +153,7 @@ done
 if [[ "$shipit_label_present" = true ]]; then
   if [[ "$needs_ci_label_present" = false ]]; then
     add_label "needs_ci"
+    ci_k8s_request "ci_k8s_full.yml"
   fi
   if [[ "$alt_needs_ci_label_present" = false && "$current_python_version" != "$alternate_python_version" ]]; then
     add_label "needs_ci${alternate_python_version}"
@@ -141,6 +161,7 @@ if [[ "$shipit_label_present" = true ]]; then
 else
   if [[ "$needs_ci_lite_label_present" = false && "$needs_ci_label_present" = false ]]; then
     add_label "needs_ci:lite"
+    ci_k8s_request "ci_k8s_lite.yml"
   fi
 fi
 
